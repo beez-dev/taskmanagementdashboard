@@ -1,0 +1,440 @@
+{
+  "info": {
+    "_postman_id": "8c7b1d2a-4e21-4f3f-9c1a-2b6f0d5e1f01",
+    "name": "Task Management Dashboard API",
+    "description": "Mock CRUD API for the Task Management Dashboard.\n\n**Base URL:** `{{baseUrl}}` (default `http://localhost:3000`).\n\n**Standard response envelope**\n```json\n{ \"data\": <T> | null, \"error\": { \"code\": string, \"message\": string, \"details\"?: object } | null, \"meta\"?: { \"total\": number, \"page\": number, \"pageSize\": number } }\n```\n\n**How to use:** run **Create Task** first — its test script captures the new task id into the `{{taskId}}` collection variable, which the Get / Update / Delete requests reference.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "taskId",
+      "value": "",
+      "type": "string",
+      "description": "Populated by the Create Task test script."
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Skip envelope checks when the response has no body (e.g., Next.js auto-405).",
+          "const ct = pm.response.headers.get(\"content-type\") || \"\";",
+          "const hasJsonBody = ct.includes(\"application/json\") && pm.response.text().length > 0;",
+          "",
+          "if (hasJsonBody) {",
+          "  pm.test(\"envelope shape\", () => {",
+          "    const body = pm.response.json();",
+          "    pm.expect(body).to.have.property(\"data\");",
+          "    pm.expect(body).to.have.property(\"error\");",
+          "    if (body.error === null) {",
+          "      pm.expect(body.data, \"data must be non-null on success\").to.not.equal(null);",
+          "    } else {",
+          "      pm.expect(body.data, \"data must be null on error\").to.equal(null);",
+          "      pm.expect(body.error).to.have.property(\"code\");",
+          "      pm.expect(body.error).to.have.property(\"message\");",
+          "    }",
+          "  });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Tasks — happy path",
+      "item": [
+        {
+          "name": "List tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            },
+            "description": "Returns all tasks. Supports `q`, `status`, `priority`, `page`, `pageSize`. Response `meta` contains `total`, `page`, `pageSize`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"data is an array\", () => pm.expect(body.data).to.be.an(\"array\"));",
+                  "pm.test(\"meta present\", () => {",
+                  "  pm.expect(body.meta).to.have.property(\"total\");",
+                  "  pm.expect(body.meta).to.have.property(\"page\");",
+                  "  pm.expect(body.meta).to.have.property(\"pageSize\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List tasks (filtered)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks?q=roadmap&status=in_progress&priority=high&page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"],
+              "query": [
+                { "key": "q", "value": "roadmap", "description": "Substring match against title + description (case-insensitive)." },
+                { "key": "status", "value": "in_progress", "description": "One of: todo, in_progress, done" },
+                { "key": "priority", "value": "high", "description": "One of: low, medium, high" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10", "description": "Max 100." }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"every item matches filter\", () => {",
+                  "  body.data.forEach((t) => {",
+                  "    pm.expect(t.status).to.eql(\"in_progress\");",
+                  "    pm.expect(t.priority).to.eql(\"high\");",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create task",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "content-type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Prepare release notes\",\n  \"description\": \"Summarise the v1 changes for stakeholders.\",\n  \"status\": \"todo\",\n  \"priority\": \"medium\",\n  \"dueDate\": \"2026-08-15\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"]
+            },
+            "description": "Creates a task. `title` and `dueDate` are required. `status` defaults to `todo`, `priority` to `medium`. Returns 201 with the created task; the test script stores the new id into `{{taskId}}`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"task has id and timestamps\", () => {",
+                  "  pm.expect(body.data).to.have.property(\"id\");",
+                  "  pm.expect(body.data).to.have.property(\"createdAt\");",
+                  "  pm.expect(body.data).to.have.property(\"updatedAt\");",
+                  "});",
+                  "pm.collectionVariables.set(\"taskId\", body.data.id);",
+                  "console.log(\"Captured taskId =\", body.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get task by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "{{taskId}}"]
+            },
+            "description": "Requires `{{taskId}}` — run **Create task** first."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"id matches captured taskId\", () => {",
+                  "  pm.expect(body.data.id).to.eql(pm.collectionVariables.get(\"taskId\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update task (partial)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "content-type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"priority\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "{{taskId}}"]
+            },
+            "description": "PATCH accepts a partial task body. Must include at least one updatable field. Server bumps `updatedAt`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"fields updated\", () => {",
+                  "  pm.expect(body.data.status).to.eql(\"in_progress\");",
+                  "  pm.expect(body.data.priority).to.eql(\"high\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete task",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "{{taskId}}"]
+            },
+            "description": "Deletes the task. Returns 200 with `{ data: { id } }` to keep the envelope consistent (instead of a bodyless 204)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"data.id matches deleted task\", () => {",
+                  "  pm.expect(body.data.id).to.eql(pm.collectionVariables.get(\"taskId\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Validation & error paths",
+      "item": [
+        {
+          "name": "Create — missing title (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "content-type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dueDate\": \"2026-08-15\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"error code is validation_error\", () => pm.expect(body.error.code).to.eql(\"validation_error\"));",
+                  "pm.test(\"details.field is title\", () => pm.expect(body.error.details.field).to.eql(\"title\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create — malformed JSON (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "content-type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "not-json"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"error code is invalid_json\", () => pm.expect(body.error.code).to.eql(\"invalid_json\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List — invalid status (400)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks?status=bogus",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"],
+              "query": [
+                { "key": "status", "value": "bogus" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"error mentions allowed values\", () => pm.expect(body.error.details.allowed).to.include(\"todo\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update — empty body (400)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "content-type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "{{taskId}}"]
+            },
+            "description": "PATCH with no updatable fields returns 400."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"error code is validation_error\", () => pm.expect(body.error.code).to.eql(\"validation_error\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get — not found (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/does-not-exist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks", "does-not-exist"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"error code is task_not_found\", () => pm.expect(body.error.code).to.eql(\"task_not_found\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Method not allowed (405)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "content-type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tasks"]
+            },
+            "description": "Only GET and POST are defined on `/api/v1/tasks`. Next.js auto-returns 405 (bodyless) for the other verbs."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"405 Method Not Allowed\", () => pm.response.to.have.status(405));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
