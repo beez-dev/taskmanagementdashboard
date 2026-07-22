@@ -37,7 +37,7 @@ Dependencies point **inward only**. Outer layers know about inner layers; inner 
 |---|---|---|
 | [`app/`](./app/) | Next.js App Router pages/layouts. Stays thin — composes presentation. | (framework) |
 | [`src/domain/`](./src/domain/README.md) | Entities, value objects, repository interfaces, domain errors. Pure TS. | [README](./src/domain/README.md) |
-| [`src/domain/common/`](./src/domain/common/README.md) | Base `Entity`, `ValueObject`, `DomainError`, shared domain primitives. | [README](./src/domain/common/README.md) |
+| [`src/domain/common/`](src/domain/types/README.md) | Base `Entity`, `ValueObject`, `DomainError`, shared domain primitives. | [README](src/domain/types/README.md) |
 | [`src/application/`](./src/application/README.md) | Use cases, ports, DTOs. Framework-agnostic orchestration. | [README](./src/application/README.md) |
 | [`src/infrastructure/`](./src/infrastructure/README.md) | HTTP clients, storage, SDKs — implementations of interfaces from inner layers. | [README](./src/infrastructure/README.md) |
 | [`src/presentation/`](./src/presentation/README.md) | React components, hooks, view models, client state. | [README](./src/presentation/README.md) |

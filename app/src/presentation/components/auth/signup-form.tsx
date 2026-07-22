@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-import { AppButton } from "@/src/presentation/components/ui/app-button";
+import type { SignupInput } from "@/src/domain/types/user";
 import {
   AppCard,
   AppCardContent,
@@ -10,19 +9,27 @@ import {
   AppCardHeader,
   AppCardTitle,
 } from "@/src/presentation/components/ui/app-card";
+import { AppButton } from "@/src/presentation/components/ui/app-button";
 import { LabeledInput } from "@/src/presentation/components/form/labeled-input";
 import { PasswordInput } from "@/src/presentation/components/form/password-input";
 
 interface SignupFormProps {
-  onSwitch: () => void;
+  onSubmit: (data: SignupInput) => void;
+  isLoading: boolean;
+  onSwitchToLogin: () => void;
+  fieldErrors?: Partial<Record<keyof SignupInput, string>>;
 }
 
-export function SignupForm({ onSwitch }: SignupFormProps) {
+export function SignupForm({ onSubmit, isLoading, onSwitchToLogin, fieldErrors = {} }: SignupFormProps) {
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  function handleSubmit() {
+    onSubmit({ name, dob, email, password, confirmPassword });
+  }
 
   return (
     <AppCard className="w-full max-w-sm sm:max-w-md">
@@ -40,6 +47,8 @@ export function SignupForm({ onSwitch }: SignupFormProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoComplete="name"
+          disabled={isLoading}
+          error={fieldErrors.name}
         />
 
         <LabeledInput
@@ -48,6 +57,8 @@ export function SignupForm({ onSwitch }: SignupFormProps) {
           type="date"
           value={dob}
           onChange={(e) => setDob(e.target.value)}
+          disabled={isLoading}
+          error={fieldErrors.dob}
         />
 
         <LabeledInput
@@ -58,6 +69,8 @@ export function SignupForm({ onSwitch }: SignupFormProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
+          disabled={isLoading}
+          error={fieldErrors.email}
         />
 
         <PasswordInput
@@ -67,6 +80,8 @@ export function SignupForm({ onSwitch }: SignupFormProps) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="new-password"
+          disabled={isLoading}
+          error={fieldErrors.password}
         />
 
         <PasswordInput
@@ -76,10 +91,17 @@ export function SignupForm({ onSwitch }: SignupFormProps) {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           autoComplete="new-password"
+          disabled={isLoading}
+          error={fieldErrors.confirmPassword}
         />
 
-        <AppButton type="button" className="w-full">
-          Create account
+        <AppButton
+          type="button"
+          className="w-full"
+          disabled={isLoading}
+          onClick={handleSubmit}
+        >
+          {isLoading ? "Creating account…" : "Create account"}
         </AppButton>
 
         <p className="text-center text-sm text-muted-foreground">
@@ -87,8 +109,8 @@ export function SignupForm({ onSwitch }: SignupFormProps) {
           <span
             role="button"
             tabIndex={0}
-            onClick={onSwitch}
-            onKeyDown={(e) => e.key === "Enter" && onSwitch()}
+            onClick={onSwitchToLogin}
+            onKeyDown={(e) => e.key === "Enter" && onSwitchToLogin()}
             className="cursor-pointer text-primary underline-offset-4 hover:underline"
           >
             Sign in

@@ -1,4 +1,5 @@
-import type { ApiError, ApiMeta } from "@/src/common/types/api";
+import { z } from "zod";
+import type { ApiError, ApiMeta } from "./types";
 
 export class ApiHttpError extends Error {
   constructor(
@@ -22,7 +23,7 @@ export function jsonOk<T>(
 }
 
 export function jsonError(error: ApiError, status: number): Response {
-  return Response.json({ data: null, error }, { status : status ?? 500});
+  return Response.json({ data: null, error }, { status: status ?? 500 });
 }
 
 export const errors = {
@@ -31,8 +32,12 @@ export const errors = {
   validation: (message: string, details?: Record<string, unknown>) =>
     new ApiHttpError(400, "validation_error", message, details),
   badJson: () => new ApiHttpError(400, "invalid_json", "Request body is not valid JSON"),
-  conflict: (message: string) =>
-    new ApiHttpError(409, "conflict", message),
-  unauthorized: (message: string) =>
-    new ApiHttpError(401, "unauthorized", message),
+  conflict: (message: string) => new ApiHttpError(409, "conflict", message),
+  unauthorized: (message: string) => new ApiHttpError(401, "unauthorized", message),
 };
+
+export function zodToApiError(err: z.ZodError): ApiHttpError {
+  const first = err.issues[0];
+  const field = first.path[0] !== undefined ? String(first.path[0]) : undefined;
+  return errors.validation(first.message, field ? { field } : undefined);
+}

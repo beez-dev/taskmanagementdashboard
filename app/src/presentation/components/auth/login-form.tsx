@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-
-import { AppButton } from "@/src/presentation/components/ui/app-button";
 import {
   AppCard,
   AppCardContent,
@@ -10,16 +8,19 @@ import {
   AppCardHeader,
   AppCardTitle,
 } from "@/src/presentation/components/ui/app-card";
+import { AppButton } from "@/src/presentation/components/ui/app-button";
 import { CheckboxField } from "@/src/presentation/components/form/checkbox-field";
 import { LabeledInput } from "@/src/presentation/components/form/labeled-input";
 import { PasswordInput } from "@/src/presentation/components/form/password-input";
 
 interface LoginFormProps {
-  onSwitch: () => void;
+  onSubmit: (email: string, password: string) => void;
+  isLoading: boolean;
+  onSwitchToSignup: () => void;
+  fieldErrors?: { email?: string; password?: string };
 }
 
-export function LoginForm({ onSwitch }: LoginFormProps) {
-  // using controlled input for simple forms
+export function LoginForm({ onSubmit, isLoading, onSwitchToSignup, fieldErrors = {} }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -40,6 +41,8 @@ export function LoginForm({ onSwitch }: LoginFormProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
+          disabled={isLoading}
+          error={fieldErrors.email}
         />
 
         <PasswordInput
@@ -49,6 +52,8 @@ export function LoginForm({ onSwitch }: LoginFormProps) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
+          disabled={isLoading}
+          error={fieldErrors.password}
         />
 
         <CheckboxField
@@ -58,8 +63,13 @@ export function LoginForm({ onSwitch }: LoginFormProps) {
           onCheckedChange={setRememberMe}
         />
 
-        <AppButton type="button" className="w-full">
-          Sign in
+        <AppButton
+          type="button"
+          className="w-full"
+          disabled={isLoading}
+          onClick={() => onSubmit(email, password)}
+        >
+          {isLoading ? "Signing in…" : "Sign in"}
         </AppButton>
 
         <p className="text-center text-sm text-muted-foreground">
@@ -67,8 +77,8 @@ export function LoginForm({ onSwitch }: LoginFormProps) {
           <span
             role="button"
             tabIndex={0}
-            onClick={onSwitch}
-            onKeyDown={(e) => e.key === "Enter" && onSwitch()}
+            onClick={onSwitchToSignup}
+            onKeyDown={(e) => e.key === "Enter" && onSwitchToSignup()}
             className="cursor-pointer text-primary underline-offset-4 hover:underline"
           >
             Sign up

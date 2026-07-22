@@ -1,9 +1,5 @@
-import { AuthContainer } from "@/src/presentation/components/auth/auth-container";
-
-export const metadata = {
-  title: "Task Manager — Sign in",
-};
+import { AuthPage } from "@/src/application/auth/auth-page";
 
 export default function Home() {
-  return <AuthContainer />;
+  return <AuthPage />;
 }

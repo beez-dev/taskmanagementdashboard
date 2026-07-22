@@ -1,4 +1,4 @@
-import type { Task } from "@/src/common/types/task";
+import type { Task } from "./types";
 
 const STORE_KEY = Symbol.for("app.mock.taskStore");
 

@@ -1,4 +1,4 @@
-import type { User } from "@/src/common/types/user";
+import type { User } from "./types";
 
 const STORE_KEY = Symbol.for("app.mock.userStore");
 
