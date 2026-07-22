@@ -4,6 +4,6 @@ export const metadata = {
   title: "Task Manager — Sign in",
 };
 
-export default function Home() {
+export default function AuthPage() {
   return <AuthContainer />;
 }

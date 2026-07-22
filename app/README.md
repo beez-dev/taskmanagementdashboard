@@ -93,6 +93,58 @@ Generated UI primitives live in [`components/ui/`](./components/) — the shadcn
 
 **How the two connect:** [`presentation/store/index.ts`](./src/presentation/store/README.md) imports the generated `reducer` and `middleware` from each API in `infrastructure/api/` and registers them with `configureStore`. Components import the generated hooks (`useGetTasksQuery`, etc.) directly from `infrastructure/api/`.
 
+## API
+
+Mock REST API served by Next.js Route Handlers. All endpoints follow the pattern `/api/v1/<plural>`.
+
+### Endpoints
+
+| Method | URL | Description |
+|---|---|---|
+| `GET` | `/api/v1/tasks` | List tasks. Supports `q`, `status`, `priority`, `page`, `pageSize`. |
+| `POST` | `/api/v1/tasks` | Create a task. Returns 201. |
+| `GET` | `/api/v1/tasks/:id` | Get a single task. |
+| `PATCH` | `/api/v1/tasks/:id` | Partial update. At least one field required. |
+| `DELETE` | `/api/v1/tasks/:id` | Delete. Returns 200 `{ data: { id } }`. |
+
+### Response envelope
+
+Every response — success and error — uses the same JSON shape:
+
+```json
+{
+  "data": <T> | null,
+  "error": { "code": "string", "message": "string", "details"?: {} } | null,
+  "meta"?: { "total": number, "page": number, "pageSize": number }
+}
+```
+
+See [`app/api/lib/`](./app/api/lib/README.md) for the shared plumbing (response helpers, validation, mock store).
+
+### Testing with Postman
+
+A ready-to-import Postman collection lives at [`tasks-api.postman_collection.json`](./tasks-api.postman_collection.json).
+
+**Import:** Postman → **Import** → select the file.
+
+**How to use:**
+1. Start the dev server: `bun dev`
+2. Open the collection. The `baseUrl` variable defaults to `http://localhost:3000` — change it if your server runs elsewhere.
+3. Run **Create task** first — its test script captures the new task id into `{{taskId}}`, which the Get / Update / Delete requests reference automatically.
+4. Run the full collection via **Run collection** or use the [Newman](https://learning.postman.com/docs/collections/using-newman-cli/command-line-integration-with-newman/) CLI:
+   ```bash
+   bunx --package newman newman run tasks-api.postman_collection.json
+   ```
+
+**What's covered:**
+
+| Folder | Requests |
+|---|---|
+| Tasks — happy path | List, List (filtered), Create, Get, Update (partial), Delete |
+| Validation & error paths | Missing field (400), malformed JSON (400), invalid enum (400), empty PATCH body (400), not found (404), wrong method (405) |
+
+Each request includes assertions on status code, envelope shape, and field values. The collection-level test validates the envelope on every JSON response automatically.
+
 ## Learn More
 
 - [Next.js Documentation](https://nextjs.org/docs)
