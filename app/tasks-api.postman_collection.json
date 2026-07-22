@@ -16,6 +16,18 @@
       "value": "",
       "type": "string",
       "description": "Populated by the Create Task test script."
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string",
+      "description": "Populated by the Sign up or Sign in test script."
+    },
+    {
+      "key": "signupEmail",
+      "value": "",
+      "type": "string",
+      "description": "Email used in the most recent Sign up request — reused by Sign in."
     }
   ],
   "event": [
@@ -245,6 +257,301 @@
                   "const body = pm.response.json();",
                   "pm.test(\"data.id matches deleted task\", () => {",
                   "  pm.expect(body.data.id).to.eql(pm.collectionVariables.get(\"taskId\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth — happy path",
+      "item": [
+        {
+          "name": "Sign up (new user)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "content-type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@example.com\",\n  \"password\": \"secret123\",\n  \"confirmPassword\": \"secret123\",\n  \"dob\": \"1995-04-22\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "description": "Creates a new user account. Returns 201 with the user (password omitted). The test script captures the new `userId` and the email for the Sign in request."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"user returned without password\", () => {",
+                  "  pm.expect(body.data).to.have.property(\"id\");",
+                  "  pm.expect(body.data).to.have.property(\"name\");",
+                  "  pm.expect(body.data).to.have.property(\"email\");",
+                  "  pm.expect(body.data).to.not.have.property(\"password\");",
+                  "});",
+                  "pm.collectionVariables.set(\"userId\", body.data.id);",
+                  "pm.collectionVariables.set(\"signupEmail\", body.data.email);",
+                  "console.log(\"Captured userId =\", body.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign in (signed-up user)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "content-type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.smith@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sessions"]
+            },
+            "description": "Authenticates credentials against the in-memory store. Returns 200 with the user (password omitted). Run **Sign up** first to ensure the user exists, or use the seeded test user below."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"user returned without password\", () => {",
+                  "  pm.expect(body.data).to.have.property(\"id\");",
+                  "  pm.expect(body.data).to.not.have.property(\"password\");",
+                  "});",
+                  "pm.collectionVariables.set(\"userId\", body.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign in (seeded test user)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "content-type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seed@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sessions"]
+            },
+            "description": "Signs in using the pre-seeded user that exists from server start. Does not require running Sign up first. Useful for quick testing."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"seeded user name is correct\", () => {",
+                  "  pm.expect(body.data.name).to.eql(\"Seed User\");",
+                  "  pm.expect(body.data.email).to.eql(\"seed@example.com\");",
+                  "  pm.expect(body.data).to.not.have.property(\"password\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth — error paths",
+      "item": [
+        {
+          "name": "Sign up — duplicate email (409)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "content-type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Duplicate User\",\n  \"email\": \"seed@example.com\",\n  \"password\": \"password123\",\n  \"confirmPassword\": \"password123\",\n  \"dob\": \"1990-01-01\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409 Conflict\", () => pm.response.to.have.status(409));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"error code is conflict\", () => pm.expect(body.error.code).to.eql(\"conflict\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign up — passwords do not match (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "content-type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"mismatch@example.com\",\n  \"password\": \"secret123\",\n  \"confirmPassword\": \"different456\",\n  \"dob\": \"1990-01-01\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"error mentions confirmPassword\", () => {",
+                  "  pm.expect(body.error.details.field).to.eql(\"confirmPassword\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign up — missing required field (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "content-type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"noname@example.com\",\n  \"password\": \"secret123\",\n  \"confirmPassword\": \"secret123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"error code is validation_error\", () => pm.expect(body.error.code).to.eql(\"validation_error\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign up — password too short (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "content-type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"short@example.com\",\n  \"password\": \"abc\",\n  \"confirmPassword\": \"abc\",\n  \"dob\": \"1990-01-01\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"error mentions password field\", () => pm.expect(body.error.details.field).to.eql(\"password\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign in — wrong password (401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "content-type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seed@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sessions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"error code is unauthorized\", () => pm.expect(body.error.code).to.eql(\"unauthorized\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign in — unknown email (401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "content-type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nobody@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "sessions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401 Unauthorized\", () => pm.response.to.have.status(401));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"error code is unauthorized\", () => pm.expect(body.error.code).to.eql(\"unauthorized\"));",
+                  "pm.test(\"same message as wrong password (no user enumeration)\", () => {",
+                  "  pm.expect(body.error.message).to.eql(\"Invalid email or password\");",
                   "});"
                 ]
               }

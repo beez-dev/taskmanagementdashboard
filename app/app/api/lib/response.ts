@@ -31,4 +31,8 @@ export const errors = {
   validation: (message: string, details?: Record<string, unknown>) =>
     new ApiHttpError(400, "validation_error", message, details),
   badJson: () => new ApiHttpError(400, "invalid_json", "Request body is not valid JSON"),
+  conflict: (message: string) =>
+    new ApiHttpError(409, "conflict", message),
+  unauthorized: (message: string) =>
+    new ApiHttpError(401, "unauthorized", message),
 };
