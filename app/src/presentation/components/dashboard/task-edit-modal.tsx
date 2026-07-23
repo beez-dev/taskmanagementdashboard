@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion } from "motion/react";
 import type { Task, TaskPriority, TaskStatus } from "@/src/domain/types/task";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/src/domain/types/task";
+import { useUpdateTask } from "@/src/application/dashboard/use-update-task";
 
 const statusLabel: Record<TaskStatus, string> = {
   todo: "To Do",
@@ -37,6 +38,7 @@ function formReducer(state: FormState, action: FormAction): FormState {
 }
 
 export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
+  const { handleUpdate, isLoading } = useUpdateTask();
   const [form, dispatch] = useReducer(formReducer, {
     title: task.title,
     description: task.description,
@@ -166,10 +168,11 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
             </button>
             <button
               type="button"
-              onClick={onClose}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              disabled={isLoading}
+              onClick={() => handleUpdate(task, form, onClose)}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              Save
+              {isLoading ? "Saving…" : "Save"}
             </button>
           </div>
         </motion.div>

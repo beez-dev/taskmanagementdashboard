@@ -10,7 +10,7 @@ import {
 export const GET = handle(async (req) => {
   const params = parseListParams(req.nextUrl.searchParams);
   const all = Array.from(taskStore().values()).sort((a, b) =>
-    b.createdAt.localeCompare(a.createdAt),
+    b.updatedAt.localeCompare(a.updatedAt),
   );
 
   const filtered = all.filter((t) => {

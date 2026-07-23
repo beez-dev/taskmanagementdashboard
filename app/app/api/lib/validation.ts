@@ -14,7 +14,7 @@ const listTasksSchema = z.object({
   priority: taskPrioritySchema.optional(),
   // URLSearchParams values are strings — coerce to number, silently default on bad input
   page: z.coerce.number().int().min(1).catch(1),
-  pageSize: z.coerce.number().int().min(1).max(100).catch(20),
+  pageSize: z.coerce.number().int().min(1).catch(20),
 });
 
 export type ListParams = z.infer<typeof listTasksSchema>;

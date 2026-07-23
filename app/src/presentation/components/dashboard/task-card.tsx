@@ -32,6 +32,7 @@ export function TaskCard({ task, onClick, isSelected }: TaskCardProps) {
       layoutId={`task-card-${task.id}`}
       onClick={onClick}
       className={`shrink-0 cursor-pointer ${isSelected ? "opacity-0" : ""}`}
+      exit={{ opacity: 0, scale: 0.85 }}
       transition={{ duration: 0.3, ease: "easeInOut" as const }}
     >
       <AppCard className="transition-colors hover:bg-muted/50">

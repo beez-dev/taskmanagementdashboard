@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence } from "motion/react";
 import type { Task, TaskStatus } from "@/src/domain/types/task";
-import { useInfiniteTasks } from "@/src/application/dashboard/use-infinite-tasks";
+import { useListTasksQuery } from "@/src/infrastructure/api/tasks.api";
 import { TaskCard } from "./task-card";
 import { TaskEditModal } from "./task-edit-modal";
 import { LoadingSpinner } from "@/src/presentation/components/ui/loading-spinner";
@@ -16,20 +16,9 @@ const statusLabel: Record<TaskStatus, string> = {
 };
 
 export function TaskColumn({ status }: { status: TaskStatus }) {
-  const { tasks, isFetching, loadMore } = useInfiniteTasks(status);
+  const { data, isFetching } = useListTasksQuery({ status, page: 1, pageSize: 10000 });
+  const tasks = data?.tasks ?? [];
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) loadMore(); },
-      { threshold: 0 },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <>
@@ -39,15 +28,16 @@ export function TaskColumn({ status }: { status: TaskStatus }) {
           <span className="text-xs text-muted-foreground">{tasks.length}</span>
         </div>
         <div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onClick={() => setSelectedTask(task)}
-              isSelected={selectedTask?.id === task.id}
-            />
-          ))}
-          <div ref={sentinelRef} className="h-1 shrink-0" />
+          <AnimatePresence mode="popLayout">
+            {tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onClick={() => setSelectedTask(task)}
+                isSelected={selectedTask?.id === task.id}
+              />
+            ))}
+          </AnimatePresence>
           {isFetching && (
             <div className="py-2">
               <LoadingSpinner />
@@ -58,10 +48,7 @@ export function TaskColumn({ status }: { status: TaskStatus }) {
 
       <AnimatePresence>
         {selectedTask && (
-          <TaskEditModal
-            task={selectedTask}
-            onClose={() => setSelectedTask(null)}
-          />
+          <TaskEditModal task={selectedTask} onClose={() => setSelectedTask(null)} />
         )}
       </AnimatePresence>
     </>
