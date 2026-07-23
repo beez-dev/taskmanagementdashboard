@@ -13,8 +13,8 @@ export const GET = handle(async () => {
   const all = [...taskStore().values()];
   const summary: TaskSummary = {
     total:        all.length,
-    completed:    all.filter((t) => t.status === "done").length,
-    pending:      all.filter((t) => t.status !== "done").length,
+    completed:    all.filter((t) => t.status === "completed").length,
+    pending:      all.filter((t) => t.status !== "completed").length,
     highPriority: all.filter((t) => t.priority === "high").length,
   };
   return jsonOk(summary);

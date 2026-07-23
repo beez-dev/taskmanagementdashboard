@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // ─── Enum constants (kept as const arrays so barrels/tests can iterate them) ─
 
-export const TASK_STATUSES = ["todo", "in_progress", "done"] as const;
+export const TASK_STATUSES = ["todo", "pending", "testing", "completed"] as const;
 export const TASK_PRIORITIES = ["low", "medium", "high"] as const;
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
@@ -38,10 +38,7 @@ export const updateTaskSchema = z
       .max(200, "Title must be 200 characters or fewer")
       .transform((v) => v.trim())
       .optional(),
-    description: z
-      .string()
-      .max(2000, "Description must be 2000 characters or fewer")
-      .optional(),
+    description: z.string().max(2000, "Description must be 2000 characters or fewer").optional(),
     status: taskStatusSchema.optional(),
     priority: taskPrioritySchema.optional(),
     dueDate: z
