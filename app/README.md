@@ -1,15 +1,96 @@
 # Task Management Dashboard
 
-Next.js frontend organised with a **Clean Architecture** layout. The goal is that business rules stay independent of React, Next.js, and any HTTP client — so any of those can be swapped without touching the core of the app.
+A full-featured task management kanban board built with Next.js, React 19, and TypeScript. Organised with Clean Architecture so business rules stay independent of React, Next.js, and any HTTP client.
+
+## Features
+
+### Task Board
+- **Kanban columns** — four status columns: To Do, Pending, Testing, Completed
+- **Task cards** — show title, description excerpt, colour-coded priority (High / Medium / Low), and due date
+- **Edit modal** — click any card to open a form to edit title, description, status, priority, and due date; animated with Framer Motion
+- **Delete** — delete button inside the edit modal; updates the column immediately via RTK Query cache invalidation
+- **200 seeded tasks** — in-memory mock store, evenly distributed across all four statuses
+
+### Search & Filters
+- **Search by title** — real-time client-side filter across the visible column(s)
+- **Filter by status** — hides non-matching columns on desktop; switches the active tab on mobile
+- **Filter by priority** — narrows cards within each column
+- **Sort by due date** — cycles through none → ascending → descending
+- Filter state is stored in **Redux** (not component state) to demonstrate UI state that survives page navigations without a URL parameter or server round-trip
+
+### Authentication
+- Sign-in and sign-up forms with **Zod validation** and per-field error messages
+- **Enter key** submits both forms
+- Auth state is **persisted via Redux Persist** so users stay logged in across page refreshes
+
+### Navigation & Layout
+- **Top navbar** — Dashboard title on the left; Log out and Settings gear on the right
+- **Settings drawer** — slides in from the right using Framer Motion; contains a Light / Dark theme toggle
+- **Theme** — persisted to `localStorage` via Redux Persist; applies the `.dark` CSS class to `<html>` through a `ThemeSync` component; no `next-themes` dependency
+- **Page transition** — auth page animates out (fade + scale up) before navigating; dashboard animates in (fade + slide up)
+- **Mobile layout** — summary cards in a 2×2 grid, task board as a tabbed single-column view; filter bar wraps naturally
+- **Desktop layout** — four side-by-side scrollable columns
+
+## Tech Stack
+
+| Concern | Library |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| UI runtime | React 19 |
+| Language | TypeScript 5 |
+| Styling | Tailwind CSS v4 |
+| UI primitives | Base UI + shadcn/ui (at `components/ui/`) |
+| Server state | RTK Query (part of Redux Toolkit) |
+| Client state | Redux Toolkit + Redux Persist |
+| Animations | Framer Motion (`motion/react` v12) |
+| Validation | Zod v4 |
+| Toasts | Sonner |
+| Icons | Lucide React |
 
 ## Getting Started
 
 ```bash
-bun dev
-# or: npm run dev / yarn dev / pnpm dev
+npm run dev
+# or: yarn dev / pnpm dev / bun dev
 ```
 
-Open <http://localhost:3000>.
+Open <http://localhost:3000>. Register a new account or sign in with any existing one.
+
+## Project Structure
+
+```
+app/                        Next.js App Router pages and route handlers
+  (auth)/page.tsx           Sign-in / sign-up page
+  (protected)/dashboard/    Dashboard page (behind AuthGuard)
+  api/v1/                   Mock REST API route handlers
+    tasks/                  GET list, POST create
+    tasks/[id]/             GET, PATCH, DELETE
+    tasks/summary/          Aggregate counts
+    sessions/               POST sign-in
+    users/                  POST sign-up
+
+src/
+  domain/                   Entities, types, Zod schemas — pure TS, zero framework deps
+  application/              Feature hooks, Redux store, app-level providers
+    store/
+      slices/
+        auth.slice.ts       Authenticated user (persisted)
+        preferences.slice.ts Theme preference (persisted)
+        filters.slice.ts    Task filter state (in-memory Redux, not persisted)
+  infrastructure/
+    api/
+      base-api.ts           RTK Query base with /api/v1 baseUrl
+      tasks.api.ts          listTasks, updateTask, deleteTask, getTaskSummary
+      auth.api.ts           signin, signup mutations
+  presentation/
+    components/
+      auth/                 LoginForm, SignupForm
+      dashboard/            TaskBoard, TaskColumn, TaskCard, TaskFiltersBar, TaskEditModal
+      layout/               Navbar, SettingsDrawer
+      ui/                   AppCard, AppButton, AppInput — thin wrappers over shadcn primitives
+
+components/ui/              shadcn-managed UI primitives (CLI default location, not moved)
+```
 
 ## Architecture
 
@@ -17,135 +98,63 @@ Dependencies point **inward only**. Outer layers know about inner layers; inner 
 
 ```
         ┌─────────────────────────────────────────────┐
-        │  app/            Next.js routing shell      │  (framework convention)
+        │  app/            Next.js routing shell      │
         │  ─────────────────────────────────────────  │
-        │  src/presentation/   React / hooks / views  │
-        │  src/infrastructure/ HTTP, storage, SDKs    │
+        │  src/presentation/   React components       │
+        │  src/infrastructure/ RTK Query, API clients │
         │  ─────────────────────────────────────────  │
-        │  src/application/    Use cases, ports, DTOs │
+        │  src/application/    Hooks, store, providers│
         │  ─────────────────────────────────────────  │
-        │  src/domain/         Entities, value objs   │
-        │  ─────────────────────────────────────────  │
-        │  src/common/         Generic helpers        │
+        │  src/domain/         Types, schemas, errors │
         └─────────────────────────────────────────────┘
                   ▲ imports flow this way ▲
 ```
 
-### Layers
+See the per-layer READMEs for what belongs in each folder.
 
-| Folder | Purpose | Docs |
+## Redux Store
+
+| Slice | Persisted | Purpose |
 |---|---|---|
-| [`app/`](./app/) | Next.js App Router pages/layouts. Stays thin — composes presentation. | (framework) |
-| [`src/domain/`](./src/domain/README.md) | Entities, value objects, repository interfaces, domain errors. Pure TS. | [README](./src/domain/README.md) |
-| [`src/domain/common/`](src/domain/types/README.md) | Base `Entity`, `ValueObject`, `DomainError`, shared domain primitives. | [README](src/domain/types/README.md) |
-| [`src/application/`](./src/application/README.md) | Use cases, ports, DTOs. Framework-agnostic orchestration. | [README](./src/application/README.md) |
-| [`src/infrastructure/`](./src/infrastructure/README.md) | HTTP clients, storage, SDKs — implementations of interfaces from inner layers. | [README](./src/infrastructure/README.md) |
-| [`src/presentation/`](./src/presentation/README.md) | React components, hooks, view models, client state. | [README](./src/presentation/README.md) |
-| [`src/presentation/store/`](./src/presentation/store/README.md) | Redux store, slices, `<StoreProvider>`, redux-persist config. | [README](./src/presentation/store/README.md) |
-| [`src/infrastructure/api/`](./src/infrastructure/api/README.md) | RTK Query base API + endpoint definitions. Wire-format mappers. | [README](./src/infrastructure/api/README.md) |
-| [`src/common/`](./src/common/README.md) | Cross-cutting language helpers (`Result`, guards). No business meaning. | [README](./src/common/README.md) |
-| [`components/`](./components/) | **shadcn-managed** UI primitives. Kept at repo root by design (see [Layout decisions](#layout-decisions)). | — |
-
-### Why two `common/` folders?
-
-- `src/common/` — generic language helpers (`Result<T, E>`, `assertNever`). Any layer may use them.
-- `src/domain/common/` — business-meaningful base primitives (`Entity`, `ValueObject`). Only domain code uses them.
-
-Keeping them separate stops generic helpers from bleeding domain semantics, and vice versa.
-
-### Request flow (example: create a task)
-
-```
-<CreateTaskForm />                     ← presentation
-      ↓ calls
-CreateTask.execute(input)              ← application (use case)
-      ↓ uses
-Task entity + TaskRepository interface ← domain
-      ↑ implemented by
-HttpTaskRepository (fetch POST /api)   ← infrastructure
-```
-
-The presentation layer never talks to `infrastructure` directly — the concrete repository is injected at the composition edge.
-
-## Layout decisions
-
-Two deliberate exceptions to the pure clean-architecture layout. Both are documented here so nobody "corrects" them later.
-
-### shadcn/ui components stay at repo-root defaults
-
-Generated UI primitives live in [`components/ui/`](./components/) — the shadcn CLI default, **not** under `src/presentation/`.
-
-**Why:** the `components` path is baked into [`components.json`](./components.json) and referenced by every future `bunx shadcn@latest add …` command. Relocating generated files (or diverging from the community registry) means fighting the CLI on every install and upgrade. The maintenance cost outweighs the benefit of layer purity for a set of pure-visual, framework-generated primitives.
-
-**How to treat them:** think of `components/ui/` as an *external UI library that happens to live in-repo* — same status as an npm package. Presentation components in `src/presentation/` import from it freely; nothing else should.
-
-**Exception — the `cn` helper.** The `utils`/`lib` aliases in [`components.json`](./components.json) are redirected to [`src/common/utils.ts`](./src/common/utils.ts) instead of a repo-root `lib/`. `cn` is a generic language-level helper (just `clsx` + `tailwind-merge`) that fits `src/common/` naturally; keeping it there avoids a one-file `lib/` folder living outside the clean-arch tree. Because we changed the alias (not the generated code), future `shadcn add` commands emit the correct import automatically.
-
-### Redux is split by concern (RTK Query in `infrastructure/`, store in `presentation/`)
-
-- [`src/presentation/store/`](./src/presentation/store/README.md) — `configureStore`, slices, `<StoreProvider>`, `PersistGate`, redux-persist config. This is UI state and lifecycle wiring.
-- [`src/infrastructure/api/`](./src/infrastructure/api/README.md) — `createApi` base + endpoint definitions (`tasks.api.ts`, etc.). This is the HTTP client.
-
-**Why:** RTK Query is a network client with caching — the same category as `axios` or a `fetch` wrapper. The fact that it produces React hooks is an API-shape convenience, not evidence that it belongs in presentation. Splitting it out means:
-- The base URL, auth headers, and error normalisation live next to other infrastructure adapters.
-- Swapping RTK Query for a different client (or adding a second one for websockets) is a localised change.
-- Slice logic (pure UI state) doesn't get mixed in with network configuration.
-
-**How the two connect:** [`presentation/store/index.ts`](./src/presentation/store/README.md) imports the generated `reducer` and `middleware` from each API in `infrastructure/api/` and registers them with `configureStore`. Components import the generated hooks (`useGetTasksQuery`, etc.) directly from `infrastructure/api/`.
+| `auth` | Yes (`localStorage`) | `isAuthenticated`, `user` object |
+| `preferences` | Yes (`localStorage`) | `theme: "light" \| "dark"` |
+| `filters` | No (in-memory) | Task search, status, priority, sort — resets on hard refresh intentionally |
+| `api` (RTK Query) | No | Server state cache for tasks and summary |
 
 ## API
 
-Mock REST API served by Next.js Route Handlers. All endpoints follow the pattern `/api/v1/<plural>`.
-
-### Endpoints
-
-| Method | URL | Description |
-|---|---|---|
-| `GET` | `/api/v1/tasks` | List tasks. Supports `q`, `status`, `priority`, `page`, `pageSize`. |
-| `POST` | `/api/v1/tasks` | Create a task. Returns 201. |
-| `GET` | `/api/v1/tasks/:id` | Get a single task. |
-| `PATCH` | `/api/v1/tasks/:id` | Partial update. At least one field required. |
-| `DELETE` | `/api/v1/tasks/:id` | Delete. Returns 200 `{ data: { id } }`. |
-
-### Response envelope
-
-Every response — success and error — uses the same JSON shape:
+All endpoints follow `/api/v1/<resource>` and share one response envelope:
 
 ```json
 {
   "data": <T> | null,
-  "error": { "code": "string", "message": "string", "details"?: {} } | null,
+  "error": { "code": "string", "message": "string" } | null,
   "meta"?: { "total": number, "page": number, "pageSize": number }
 }
 ```
 
-See [`app/api/lib/`](./app/api/lib/README.md) for the shared plumbing (response helpers, validation, mock store).
+| Method | URL | Description |
+|---|---|---|
+| `POST` | `/api/v1/sessions` | Sign in — returns user object |
+| `POST` | `/api/v1/users` | Sign up — creates account |
+| `GET` | `/api/v1/tasks` | List tasks (`status`, `q`, `priority`, `page`, `pageSize`) |
+| `POST` | `/api/v1/tasks` | Create a task |
+| `GET` | `/api/v1/tasks/summary` | Aggregate counts (total, completed, pending, highPriority) |
+| `GET` | `/api/v1/tasks/:id` | Get single task |
+| `PATCH` | `/api/v1/tasks/:id` | Partial update (at least one field required) |
+| `DELETE` | `/api/v1/tasks/:id` | Delete — returns `{ id }` |
 
-### Testing with Postman
+The mock store seeds **200 tasks** on first request and lives in `globalThis` for the lifetime of the Next.js server process. Restarting the dev server resets all data.
 
-A ready-to-import Postman collection lives at [`tasks-api.postman_collection.json`](./tasks-api.postman_collection.json).
+## Layout Decisions
 
-**Import:** Postman → **Import** → select the file.
+### shadcn components stay at repo-root defaults
+Generated UI primitives live in `components/ui/` — the shadcn CLI default. Moving them would break every future `npx shadcn add …` command. Treat `components/ui/` as an in-repo UI library; only `src/presentation/` imports from it.
 
-**How to use:**
-1. Start the dev server: `bun dev`
-2. Open the collection. The `baseUrl` variable defaults to `http://localhost:3000` — change it if your server runs elsewhere.
-3. Run **Create task** first — its test script captures the new task id into `{{taskId}}`, which the Get / Update / Delete requests reference automatically.
-4. Run the full collection via **Run collection** or use the [Newman](https://learning.postman.com/docs/collections/using-newman-cli/command-line-integration-with-newman/) CLI:
-   ```bash
-   bunx --package newman newman run tasks-api.postman_collection.json
-   ```
+The `cn` helper is redirected to `src/common/utils.ts` via `components.json` so it fits the clean-arch tree without a stray repo-root `lib/` folder.
 
-**What's covered:**
+### RTK Query lives in `infrastructure/`, store in `application/`
+RTK Query is a network client — the same category as `fetch` or `axios`. The fact that it produces React hooks is an API-shape convenience. Keeping the `createApi` definition in `infrastructure/` means swapping the HTTP layer is a localised change. `application/store/index.ts` registers the generated reducer and middleware; components import the generated hooks from `infrastructure/api/`.
 
-| Folder | Requests |
-|---|---|
-| Tasks — happy path | List, List (filtered), Create, Get, Update (partial), Delete |
-| Validation & error paths | Missing field (400), malformed JSON (400), invalid enum (400), empty PATCH body (400), not found (404), wrong method (405) |
-
-Each request includes assertions on status code, envelope shape, and field values. The collection-level test validates the envelope on every JSON response automatically.
-
-## Learn More
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Clean Architecture (Uncle Bob)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+### Filters in Redux, not `useState`
+`src/application/store/slices/filters.slice.ts` holds task filter state in Redux rather than component-local state. This is intentional — it demonstrates how Redux can keep UI state alive across page navigations without URL parameters or server round-trips. The slice is deliberately **not** persisted so filters reset on hard refresh.
