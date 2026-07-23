@@ -4,6 +4,7 @@ import storage from "redux-persist/lib/storage";
 import { baseApi } from "@/src/infrastructure/api/base-api";
 import authReducer from "./slices/auth.slice";
 import preferencesReducer from "./slices/preferences.slice";
+import filtersReducer from "./slices/filters.slice";
 
 const authPersistConfig = {
   key: "auth",
@@ -21,6 +22,7 @@ export const store = configureStore({
     [baseApi.reducerPath]: baseApi.reducer,
     auth: persistReducer(authPersistConfig, authReducer) as unknown as typeof authReducer,
     preferences: persistReducer(preferencesPersistConfig, preferencesReducer) as unknown as typeof preferencesReducer,
+    filters: filtersReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
