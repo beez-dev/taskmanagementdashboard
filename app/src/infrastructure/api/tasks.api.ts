@@ -47,7 +47,16 @@ const tasksApi = baseApi.injectEndpoints({
         return body?.error ?? ({ code: "unknown", message: "Something went wrong" } satisfies ApiError);
       },
     }),
+    deleteTask: build.mutation<{ id: string }, string>({
+      query: (id) => ({ url: `/tasks/${id}`, method: "DELETE" }),
+      invalidatesTags: ["TaskSummary"],
+      transformResponse: (res: ApiResponse<{ id: string }>) => res.data as { id: string },
+      transformErrorResponse: (res) => {
+        const body = res.data as ApiResponse<{ id: string }>;
+        return body?.error ?? ({ code: "unknown", message: "Something went wrong" } satisfies ApiError);
+      },
+    }),
   }),
 });
 
-export const { useGetTaskSummaryQuery, useListTasksQuery, useUpdateTaskMutation } = tasksApi;
+export const { useGetTaskSummaryQuery, useListTasksQuery, useUpdateTaskMutation, useDeleteTaskMutation } = tasksApi;

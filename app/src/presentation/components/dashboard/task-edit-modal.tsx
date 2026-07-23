@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import type { Task, TaskPriority, TaskStatus } from "@/src/domain/types/task";
 import { TASK_PRIORITIES, TASK_STATUSES } from "@/src/domain/types/task";
 import { useUpdateTask } from "@/src/application/dashboard/use-update-task";
+import { useDeleteTask } from "@/src/application/dashboard/use-delete-task";
 
 const statusLabel: Record<TaskStatus, string> = {
   todo: "To Do",
@@ -39,6 +40,7 @@ function formReducer(state: FormState, action: FormAction): FormState {
 
 export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
   const { handleUpdate, isLoading } = useUpdateTask();
+  const { handleDelete, isDeleting } = useDeleteTask();
   const [form, dispatch] = useReducer(formReducer, {
     title: task.title,
     description: task.description,
@@ -158,22 +160,32 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
           </div>
 
           {/* Actions */}
-          <div className="mt-6 flex justify-end gap-2">
+          <div className="mt-6 flex items-center justify-between gap-2">
             <button
               type="button"
-              onClick={onClose}
-              className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+              disabled={isDeleting || isLoading}
+              onClick={() => handleDelete(task, onClose)}
+              className="rounded-md border border-destructive/50 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
             >
-              Cancel
+              {isDeleting ? "Deleting…" : "Delete"}
             </button>
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={() => handleUpdate(task, form, onClose)}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {isLoading ? "Saving…" : "Save"}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isLoading || isDeleting}
+                onClick={() => handleUpdate(task, form, onClose)}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {isLoading ? "Saving…" : "Save"}
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
