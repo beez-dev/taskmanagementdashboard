@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import type { TaskStatus } from "@/src/domain/types/task";
-import { useTasksByStatus } from "@/src/application/dashboard/use-tasks-by-status";
-import { TaskCard } from "@/src/presentation/components/dashboard/task-card";
+import { useInfiniteTasks } from "@/src/application/dashboard/use-infinite-tasks";
+import { TaskCard } from "./task-card";
 import { LoadingSpinner } from "@/src/presentation/components/ui/loading-spinner";
 
 const statusLabel: Record<TaskStatus, string> = {
@@ -12,12 +13,26 @@ const statusLabel: Record<TaskStatus, string> = {
   completed: "Completed",
 };
 
-interface TaskColumnProps {
-  status: TaskStatus;
-}
+export function TaskColumn({ status }: { status: TaskStatus }) {
+  const { tasks, isFetching, loadMore } = useInfiniteTasks(status);
 
-export function TaskColumn({ status }: TaskColumnProps) {
-  const { data: tasks = [], isLoading } = useTasksByStatus(status);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        //   fires one time when visible
+        if (entry.isIntersecting) loadMore();
+      },
+      { threshold: 0 },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="flex min-h-0 min-w-[260px] flex-1 flex-col rounded-lg bg-muted/30 p-3">
@@ -26,12 +41,15 @@ export function TaskColumn({ status }: TaskColumnProps) {
         <span className="text-xs text-muted-foreground">{tasks.length}</span>
       </div>
       <div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
-        {isLoading ? (
-          <LoadingSpinner />
-        ) : tasks.length === 0 ? (
-          <p className="py-4 text-center text-xs text-muted-foreground">No tasks</p>
-        ) : (
-          tasks.map((task) => <TaskCard key={task.id} task={task} />)
+        {tasks.map((task) => (
+          <TaskCard key={task.id} task={task} />
+        ))}
+        {/* Sentinel triggers loadMore when it scrolls into view */}
+        <div ref={sentinelRef} className="h-1 shrink-0" />
+        {isFetching && (
+          <div className="py-2">
+            <LoadingSpinner />
+          </div>
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import type { ApiError, ApiResponse } from "@/src/domain/types/api";
+import type { ApiError, ApiMeta, ApiResponse } from "@/src/domain/types/api";
 import type { Task, TaskStatus } from "@/src/domain/types/task";
 import { baseApi } from "./base-api";
 
@@ -7,6 +7,11 @@ export interface TaskSummary {
   completed: number;
   pending: number;
   highPriority: number;
+}
+
+export interface TaskPage {
+  tasks: Task[];
+  total: number;
 }
 
 const tasksApi = baseApi.injectEndpoints({
@@ -21,10 +26,13 @@ const tasksApi = baseApi.injectEndpoints({
         );
       },
     }),
-    listTasks: build.query<Task[], { status: TaskStatus; page?: number; pageSize?: number }>({
+    listTasks: build.query<TaskPage, { status: TaskStatus; page?: number; pageSize?: number }>({
       query: ({ status, page = 1, pageSize = 10 }) =>
         `/tasks?status=${status}&page=${page}&pageSize=${pageSize}`,
-      transformResponse: (res: ApiResponse<Task[]>) => (res.data ?? []) as Task[],
+      transformResponse: (res: ApiResponse<Task[]>) => ({
+        tasks: (res.data ?? []) as Task[],
+        total: (res as { data: Task[]; error: null; meta?: ApiMeta }).meta?.total ?? 0,
+      }),
       transformErrorResponse: (res) => {
         const body = res.data as ApiResponse<Task[]>;
         return (

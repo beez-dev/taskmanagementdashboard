@@ -122,7 +122,7 @@ function seed(): Map<string, Task> {
     return d.toISOString();
   };
 
-  const tasks: Task[] = Array.from({ length: 210 }, (_, i) => ({
+  const tasks: Task[] = Array.from({ length: 410 }, (_, i) => ({
     id: crypto.randomUUID(),
     title: TITLES[i % TITLES.length] + (i >= TITLES.length ? ` (${Math.floor(i / TITLES.length) + 1})` : ""),
     description: DESCRIPTIONS[i % DESCRIPTIONS.length],
