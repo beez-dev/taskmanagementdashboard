@@ -67,9 +67,11 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
       {/* Centring wrapper — pointer-events-none so clicks outside the card hit the backdrop */}
       <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
         <motion.div
-          layoutId={`task-card-${task.id}`}
           className="pointer-events-auto w-full max-w-lg rounded-xl bg-card p-6 shadow-xl"
-          transition={{ duration: 0.3, ease: "easeInOut" as const }}
+          initial={{ opacity: 0, scale: 0.95, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 8 }}
+          transition={{ duration: 0.2, ease: "easeOut" as const }}
           tabIndex={-1}
           autoFocus
           onKeyDown={(e) => {

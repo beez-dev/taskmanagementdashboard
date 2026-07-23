@@ -18,10 +18,9 @@ const priorityLabel = Object.fromEntries(
 interface TaskCardProps {
   task: Task;
   onClick?: () => void;
-  isSelected?: boolean;
 }
 
-export function TaskCard({ task, onClick, isSelected }: TaskCardProps) {
+export function TaskCard({ task, onClick }: TaskCardProps) {
   const due = new Date(task.dueDate).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -29,11 +28,12 @@ export function TaskCard({ task, onClick, isSelected }: TaskCardProps) {
 
   return (
     <motion.div
-      layoutId={`task-card-${task.id}`}
       onClick={onClick}
-      className={`shrink-0 cursor-pointer ${isSelected ? "opacity-0" : ""}`}
-      exit={{ opacity: 0, scale: 0.85 }}
-      transition={{ duration: 0.3, ease: "easeInOut" as const }}
+      className="shrink-0 cursor-pointer"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2, ease: "easeOut" as const }}
     >
       <AppCard className="transition-colors hover:bg-muted/50">
         <AppCardContent className="p-3">

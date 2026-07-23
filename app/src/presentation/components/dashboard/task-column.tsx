@@ -61,7 +61,6 @@ export function TaskColumn({ status, filters }: TaskColumnProps) {
                 key={task.id}
                 task={task}
                 onClick={() => setSelectedTask(task)}
-                isSelected={selectedTask?.id === task.id}
               />
             ))}
           </AnimatePresence>
