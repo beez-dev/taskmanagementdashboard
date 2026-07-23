@@ -20,12 +20,12 @@ export function TaskColumn({ status }: TaskColumnProps) {
   const { data: tasks = [], isLoading } = useTasksByStatus(status);
 
   return (
-    <div className="flex min-w-[260px] flex-1 flex-col rounded-lg bg-muted/30 p-3">
+    <div className="flex min-h-0 min-w-[260px] flex-1 flex-col rounded-lg bg-muted/30 p-3">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-semibold">{statusLabel[status]}</h3>
         <span className="text-xs text-muted-foreground">{tasks.length}</span>
       </div>
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto pr-1 no-scrollbar">
+      <div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
         {isLoading ? (
           <LoadingSpinner />
         ) : tasks.length === 0 ? (
