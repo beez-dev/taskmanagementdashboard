@@ -1,10 +1,28 @@
 "use client";
 
+import { motion } from "motion/react";
 import { LogoutButton } from "@/src/application/auth/logout-button";
 import { useDashboardSummary } from "@/src/application/dashboard/use-dashboard-summary";
 import { SummaryCard } from "@/src/presentation/components/dashboard/summary-card";
 import { TaskBoard } from "@/src/presentation/components/dashboard/task-board";
 import { LoadingSpinner } from "@/src/presentation/components/ui/loading-spinner";
+
+const containerVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 14, scale: 0.97 },
+  show:   { opacity: 1, y: 0,  scale: 1,    transition: { duration: 0.3, ease: "easeOut" as const } },
+};
+
+const CARDS = [
+  { label: "Total Tasks",   key: "total"        },
+  { label: "Completed",     key: "completed"    },
+  { label: "Pending",       key: "pending"      },
+  { label: "High Priority", key: "highPriority" },
+] as const;
 
 export default function DashboardPage() {
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary();
@@ -19,12 +37,18 @@ export default function DashboardPage() {
       {summaryLoading || !summary ? (
         <LoadingSpinner />
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
-          <SummaryCard label="Total Tasks"   count={summary.total} />
-          <SummaryCard label="Completed"     count={summary.completed} />
-          <SummaryCard label="Pending"       count={summary.pending} />
-          <SummaryCard label="High Priority" count={summary.highPriority} />
-        </div>
+        <motion.div
+          className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
+          {CARDS.map(({ label, key }) => (
+            <motion.div key={key} variants={cardVariants}>
+              <SummaryCard label={label} count={summary[key]} />
+            </motion.div>
+          ))}
+        </motion.div>
       )}
 
       <div className="mt-3 flex min-h-0 flex-1 flex-col sm:mt-6">
