@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import type { Task, TaskStatus } from "@/src/domain/types/task";
 import { useListTasksQuery } from "@/src/infrastructure/api/tasks.api";
 import { TaskCard } from "./task-card";
 import { TaskEditModal } from "./task-edit-modal";
 import { LoadingSpinner } from "@/src/presentation/components/ui/loading-spinner";
+import type { TaskFilters } from "./types";
 
 const statusLabel: Record<TaskStatus, string> = {
   todo:      "To Do",
@@ -15,10 +16,36 @@ const statusLabel: Record<TaskStatus, string> = {
   completed: "Completed",
 };
 
-export function TaskColumn({ status }: { status: TaskStatus }) {
+interface TaskColumnProps {
+  status: TaskStatus;
+  filters: TaskFilters;
+}
+
+export function TaskColumn({ status, filters }: TaskColumnProps) {
   const { data, isFetching } = useListTasksQuery({ status, page: 1, pageSize: 10000 });
-  const tasks = data?.tasks ?? [];
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  const tasks = useMemo(() => {
+    let result = data?.tasks ?? [];
+
+    if (filters.search) {
+      const needle = filters.search.toLowerCase();
+      result = result.filter((t) => t.title.toLowerCase().includes(needle));
+    }
+
+    if (filters.priority) {
+      result = result.filter((t) => t.priority === filters.priority);
+    }
+
+    if (filters.sortDueDate) {
+      result = [...result].sort((a, b) => {
+        const diff = new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        return filters.sortDueDate === "asc" ? diff : -diff;
+      });
+    }
+
+    return result;
+  }, [data?.tasks, filters.search, filters.priority, filters.sortDueDate]);
 
   return (
     <>
