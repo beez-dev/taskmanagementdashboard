@@ -68,7 +68,7 @@ export function TaskFiltersBar({ filters, onChange }: TaskFiltersProps) {
         onValueChange={(v) => set("status", v === "all" ? "" : v as TaskFilters["status"])}
       >
         <SelectTrigger className="w-36">
-          <SelectValue placeholder="All statuses" />
+          <span>{filters.status ? statusLabel[filters.status] : "All statuses"}</span>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All statuses</SelectItem>
@@ -84,7 +84,7 @@ export function TaskFiltersBar({ filters, onChange }: TaskFiltersProps) {
         onValueChange={(v) => set("priority", v === "all" ? "" : v as TaskFilters["priority"])}
       >
         <SelectTrigger className="w-36">
-          <SelectValue placeholder="All priorities" />
+          <span>{filters.priority ? priorityLabel[filters.priority] : "All priorities"}</span>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All priorities</SelectItem>

@@ -55,7 +55,7 @@ export function TaskColumn({ status, filters }: TaskColumnProps) {
           <span className="text-xs text-muted-foreground">{tasks.length}</span>
         </div>
         <div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {tasks.map((task) => (
               <TaskCard
                 key={task.id}
