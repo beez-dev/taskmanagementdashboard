@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "motion/react";
 import { signinSchema, signupSchema } from "@/src/domain/types/user";
 import type { SignupInput } from "@/src/domain/types/user";
 import { flattenFirst } from "@/src/common/utils";
@@ -10,7 +12,6 @@ import { useSignin } from "@/src/application/auth/use-signin";
 import { useSignup } from "@/src/application/auth/use-signup";
 
 type AuthMode = "login" | "signup";
-
 type LoginFieldErrors = Partial<Record<"email" | "password", string>>;
 type SignupFieldErrors = Partial<Record<keyof SignupInput, string>>;
 
@@ -18,8 +19,10 @@ export default function AuthPage() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [loginErrors, setLoginErrors] = useState<LoginFieldErrors>({});
   const [signupErrors, setSignupErrors] = useState<SignupFieldErrors>({});
+  const [isLeaving, setIsLeaving] = useState(false);
+  const router = useRouter();
 
-  const { handleSignin, isLoading: signinLoading } = useSignin();
+  const { handleSignin, isLoading: signinLoading } = useSignin(() => setIsLeaving(true));
   const { handleSignup, isLoading: signupLoading } = useSignup(() => setMode("login"));
 
   function handleLoginSubmit(email: string, password: string) {
@@ -42,18 +45,17 @@ export default function AuthPage() {
     handleSignup(result.data);
   }
 
-  function switchToSignup() {
-    setLoginErrors({});
-    setMode("signup");
-  }
-
-  function switchToLogin() {
-    setSignupErrors({});
-    setMode("login");
-  }
+  function switchToSignup() { setLoginErrors({}); setMode("signup"); }
+  function switchToLogin() { setSignupErrors({}); setMode("login"); }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <motion.div
+      className="flex min-h-screen items-center justify-center bg-background p-4"
+      initial={{ opacity: 0, y: 16 }}
+      animate={isLeaving ? { opacity: 0, y: -24, scale: 0.97 } : { opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
+      onAnimationComplete={() => { if (isLeaving) router.push("/dashboard"); }}
+    >
       {mode === "login" ? (
         <LoginForm
           onSubmit={handleLoginSubmit}
@@ -69,6 +71,6 @@ export default function AuthPage() {
           fieldErrors={signupErrors}
         />
       )}
-    </div>
+    </motion.div>
   );
 }

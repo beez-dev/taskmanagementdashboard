@@ -9,7 +9,6 @@ import {
   AppCardTitle,
 } from "@/src/presentation/components/ui/app-card";
 import { AppButton } from "@/src/presentation/components/ui/app-button";
-import { CheckboxField } from "@/src/presentation/components/form/checkbox-field";
 import { LabeledInput } from "@/src/presentation/components/form/labeled-input";
 import { PasswordInput } from "@/src/presentation/components/form/password-input";
 
@@ -23,7 +22,6 @@ interface LoginFormProps {
 export function LoginForm({ onSubmit, isLoading, onSwitchToSignup, fieldErrors = {} }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
 
   return (
     <AppCard className="w-full max-w-sm sm:max-w-md">
@@ -33,44 +31,37 @@ export function LoginForm({ onSubmit, isLoading, onSwitchToSignup, fieldErrors =
       </AppCardHeader>
 
       <AppCardContent className="flex flex-col gap-4 px-8 sm:px-10">
-        <LabeledInput
-          id="login-email"
-          label="Email"
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
-          disabled={isLoading}
-          error={fieldErrors.email}
-        />
-
-        <PasswordInput
-          id="login-password"
-          label="Password"
-          placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
-          disabled={isLoading}
-          error={fieldErrors.password}
-        />
-
-        <CheckboxField
-          id="remember-me"
-          label="Remember me"
-          checked={rememberMe}
-          onCheckedChange={setRememberMe}
-        />
-
-        <AppButton
-          type="button"
-          className="w-full"
-          disabled={isLoading}
-          onClick={() => onSubmit(email, password)}
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => { e.preventDefault(); onSubmit(email, password); }}
         >
-          {isLoading ? "Signing in…" : "Sign in"}
-        </AppButton>
+          <LabeledInput
+            id="login-email"
+            label="Email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            disabled={isLoading}
+            error={fieldErrors.email}
+          />
+
+          <PasswordInput
+            id="login-password"
+            label="Password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            disabled={isLoading}
+            error={fieldErrors.password}
+          />
+
+          <AppButton type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Signing in…" : "Sign in"}
+          </AppButton>
+        </form>
 
         <p className="text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}

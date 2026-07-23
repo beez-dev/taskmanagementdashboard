@@ -27,10 +27,6 @@ export function SignupForm({ onSubmit, isLoading, onSwitchToLogin, fieldErrors =
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  function handleSubmit() {
-    onSubmit({ name, dob, email, password, confirmPassword });
-  }
-
   return (
     <AppCard className="w-full max-w-sm sm:max-w-md">
       <AppCardHeader className="text-center px-8 sm:px-10">
@@ -39,70 +35,70 @@ export function SignupForm({ onSubmit, isLoading, onSwitchToLogin, fieldErrors =
       </AppCardHeader>
 
       <AppCardContent className="flex flex-col gap-4 px-8 sm:px-10">
-        <LabeledInput
-          id="signup-name"
-          label="Full name"
-          type="text"
-          placeholder="Jane Smith"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoComplete="name"
-          disabled={isLoading}
-          error={fieldErrors.name}
-        />
-
-        <LabeledInput
-          id="signup-dob"
-          label="Date of birth"
-          type="date"
-          value={dob}
-          onChange={(e) => setDob(e.target.value)}
-          disabled={isLoading}
-          error={fieldErrors.dob}
-        />
-
-        <LabeledInput
-          id="signup-email"
-          label="Email"
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
-          disabled={isLoading}
-          error={fieldErrors.email}
-        />
-
-        <PasswordInput
-          id="signup-password"
-          label="Password"
-          placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="new-password"
-          disabled={isLoading}
-          error={fieldErrors.password}
-        />
-
-        <PasswordInput
-          id="signup-confirm-password"
-          label="Confirm password"
-          placeholder="••••••••"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          autoComplete="new-password"
-          disabled={isLoading}
-          error={fieldErrors.confirmPassword}
-        />
-
-        <AppButton
-          type="button"
-          className="w-full"
-          disabled={isLoading}
-          onClick={handleSubmit}
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => { e.preventDefault(); onSubmit({ name, dob, email, password, confirmPassword }); }}
         >
-          {isLoading ? "Creating account…" : "Create account"}
-        </AppButton>
+          <LabeledInput
+            id="signup-name"
+            label="Full name"
+            type="text"
+            placeholder="Jane Smith"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoComplete="name"
+            disabled={isLoading}
+            error={fieldErrors.name}
+          />
+
+          <LabeledInput
+            id="signup-dob"
+            label="Date of birth"
+            type="date"
+            value={dob}
+            onChange={(e) => setDob(e.target.value)}
+            disabled={isLoading}
+            error={fieldErrors.dob}
+          />
+
+          <LabeledInput
+            id="signup-email"
+            label="Email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            disabled={isLoading}
+            error={fieldErrors.email}
+          />
+
+          <PasswordInput
+            id="signup-password"
+            label="Password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+            disabled={isLoading}
+            error={fieldErrors.password}
+          />
+
+          <PasswordInput
+            id="signup-confirm-password"
+            label="Confirm password"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            autoComplete="new-password"
+            disabled={isLoading}
+            error={fieldErrors.confirmPassword}
+          />
+
+          <AppButton type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Creating account…" : "Create account"}
+          </AppButton>
+        </form>
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}

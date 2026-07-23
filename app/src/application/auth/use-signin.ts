@@ -7,7 +7,7 @@ import { useSigninMutation } from "@/src/infrastructure/api/auth.api";
 import { useAppDispatch } from "@/src/application/store/hooks";
 import { setUser } from "@/src/application/store/slices/auth.slice";
 
-export function useSignin() {
+export function useSignin(onSuccess?: () => void) {
   const [signin, { isLoading }] = useSigninMutation();
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -16,7 +16,8 @@ export function useSignin() {
     try {
       const user = await signin({ email, password }).unwrap();
       dispatch(setUser(user));
-      router.push("/dashboard");
+      if (onSuccess) onSuccess();
+      else router.push("/dashboard");
     } catch (err) {
       const apiErr = err as ApiError;
       toast.error(apiErr?.message ?? "Sign in failed. Please try again.");

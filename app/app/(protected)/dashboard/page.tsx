@@ -28,7 +28,12 @@ export default function DashboardPage() {
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary();
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden">
+    <motion.div
+      className="flex h-screen flex-col overflow-hidden"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+    >
       <Navbar />
 
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 sm:p-8">
@@ -53,6 +58,6 @@ export default function DashboardPage() {
           <TaskBoard />
         </div>
       </main>
-    </div>
+    </motion.div>
   );
 }
